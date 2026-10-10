@@ -77,41 +77,45 @@ export default function CollateralRegistrationForm({ walletAddress, onSuccess }:
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = sessionStorage.getItem(STORAGE_KEY);
     if (!saved) return;
 
     try {
       const parsed = JSON.parse(saved);
-      if (parsed.walletAddress === walletAddress && parsed.data) {
+      // Discard draft if expired (expiresAt is a Unix-ms timestamp)
+      if (parsed.expiresAt !== undefined && Date.now() > parsed.expiresAt) {
+        sessionStorage.removeItem(STORAGE_KEY);
+        return;
+      }
+      if (parsed.data) {
         setShowRestorePrompt(true);
       }
     } catch {
-      localStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(STORAGE_KEY);
     }
-  }, [walletAddress]);
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
       if (!formData.quantity && !formData.appraisedValue) return;
 
-      localStorage.setItem(
+      sessionStorage.setItem(
         STORAGE_KEY,
         JSON.stringify({
-          walletAddress,
           step: currentStep,
           data: {
             animalType: formData.animalType,
             quantity: formData.quantity,
             appraisedValue: formData.appraisedValue,
           },
-          timestamp: new Date().toISOString(),
+          expiresAt: Date.now() + 3_600_000,
         })
       );
       setLastSaved(new Date());
     }, AUTO_SAVE_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [currentStep, formData, walletAddress]);
+  }, [currentStep, formData]);
 
   useEffect(() => {
     if (previousStepRef.current !== currentStep) {
@@ -127,7 +131,7 @@ export default function CollateralRegistrationForm({ walletAddress, onSuccess }:
   }, [imagePreview]);
 
   const restoreSavedData = () => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = sessionStorage.getItem(STORAGE_KEY);
     if (!saved) return;
 
     try {
@@ -144,13 +148,13 @@ export default function CollateralRegistrationForm({ walletAddress, onSuccess }:
       setCurrentStep(parsed.step === 2 ? 2 : 1);
       setShowRestorePrompt(false);
     } catch {
-      localStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(STORAGE_KEY);
     }
   };
 
   const dismissRestore = () => {
     setShowRestorePrompt(false);
-    localStorage.removeItem(STORAGE_KEY);
+    sessionStorage.removeItem(STORAGE_KEY);
   };
 
   const validateField = useCallback(
@@ -322,7 +326,7 @@ export default function CollateralRegistrationForm({ walletAddress, onSuccess }:
       });
       const hash = await submitSignedXdr(signedTxXdr);
       setPendingHash(hash);
-      localStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(STORAGE_KEY);
       setLastSaved(null);
       setErrors({});
       setSubmitAttempted(false);
