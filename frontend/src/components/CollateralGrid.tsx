@@ -47,14 +47,15 @@ export default function CollateralGrid({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // ── Pagination state (synced with URL ?page=N) ──────────────────────────
+  // ── Pagination state (synced with URL ?page=N and ?limit=N) ────────────
+  // Both currentPage and pageSize are derived directly from searchParams on
+  // every render so browser back/forward navigation keeps them in sync with
+  // the URL without any useState drift.
   const rawPage = parseInt(searchParams.get('page') ?? '1', 10);
-  const [pageSize, setPageSize] = useState<CollateralPageSize>(() => {
-    const raw = parseInt(searchParams.get('limit') ?? String(DEFAULT_PAGE_SIZE), 10);
-    return (COLLATERAL_PAGE_SIZES as readonly number[]).includes(raw)
-      ? (raw as CollateralPageSize)
-      : DEFAULT_PAGE_SIZE;
-  });
+  const pageSizeRaw = parseInt(searchParams.get('limit') ?? String(DEFAULT_PAGE_SIZE), 10);
+  const pageSize = (COLLATERAL_PAGE_SIZES as readonly number[]).includes(pageSizeRaw)
+    ? (pageSizeRaw as CollateralPageSize)
+    : DEFAULT_PAGE_SIZE;
 
   const totalPages = Math.max(1, Math.ceil(collaterals.length / pageSize));
   const currentPage = Math.min(Math.max(1, isNaN(rawPage) ? 1 : rawPage), totalPages);
@@ -78,7 +79,6 @@ export default function CollateralGrid({
 
   const handlePageSizeChange = useCallback(
     (newSize: CollateralPageSize) => {
-      setPageSize(newSize);
       navigate({ limit: String(newSize), page: '1' });
     },
     [navigate],

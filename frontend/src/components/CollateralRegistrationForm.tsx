@@ -136,6 +136,13 @@ export default function CollateralRegistrationForm({ walletAddress, onSuccess }:
 
     try {
       const parsed = JSON.parse(saved);
+      // Re-check expiry at the moment the user clicks "Restore" — the same
+      // guard the mount useEffect runs, so an expired draft can't slip through.
+      if (!parsed.expiresAt || Date.now() > parsed.expiresAt) {
+        sessionStorage.removeItem(STORAGE_KEY);
+        setShowRestorePrompt(false);
+        return;
+      }
       const data = parsed.data ?? {};
       setFormData({
         animalType: ANIMAL_TYPES.includes(data.animalType)

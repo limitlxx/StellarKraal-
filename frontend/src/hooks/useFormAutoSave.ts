@@ -5,6 +5,12 @@ interface AutoSaveOptions<T> {
   data: T;
   enabled?: boolean;
   interval?: number;
+  /**
+   * @deprecated walletAddress is no longer written to storage or used for
+   * draft isolation. All drafts share the same sessionStorage key. Passing
+   * this option has no effect; callers that relied on per-wallet isolation
+   * must either namespace `storageKey` themselves or remove this option.
+   */
   walletAddress?: string;
   /**
    * Saved data older than this (ms) is treated as if it were never saved:
