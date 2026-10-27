@@ -5,6 +5,7 @@ import Card from '@/components/Card';
 import SkeletonCollateralCard from '@/components/SkeletonCollateralCard';
 import EmptyState from '@/components/EmptyState';
 import MoneyAmount from '@/components/MoneyAmount';
+import { AnimalIcon } from '@/components/AnimalIcon';
 import { formatFiat, formatXlmNumber } from '@/lib/formatMoney';
 import { healthColor, healthTier, HEALTH_TIER_ICON, HEALTH_TIER_LABEL } from '@/lib/design-tokens';
 
@@ -25,11 +26,6 @@ interface Props {
   onBatchDelete?: (ids: string[]) => Promise<void>;
 }
 
-const ANIMAL_ICONS: Record<string, string> = {
-  cattle: '🐄',
-  goat: '🐐',
-  sheep: '🐑',
-};
 
 /** Page size options specific to the collateral grid (cards-per-page). */
 const COLLATERAL_PAGE_SIZES = [12, 24, 48] as const;
@@ -289,15 +285,9 @@ export default function CollateralGrid({
       )}
 
       {/* Grid */}
-      <div
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        onKeyDown={handleGridKeyDown}
-        role="grid"
-        aria-label="Collateral cards"
-      >
-        {pageCollaterals.map((collateral, i) => {
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {collaterals.map((collateral, i) => {
           const usdValue = (collateral.appraised_value / 1e7) * 0.12;
-          const icon = ANIMAL_ICONS[collateral.animal_type] || '🐾';
           const healthFactorBps = collateral.health_factor_bps;
           const showHealthIndicator = healthFactorBps !== undefined && healthFactorBps !== null;
           const healthColorHex = showHealthIndicator ? healthColor(healthFactorBps) : undefined;
@@ -341,7 +331,7 @@ export default function CollateralGrid({
                   header={
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-3xl">{icon}</span>
+                        <AnimalIcon type={collateral.animal_type} size={40} />
                         {showHealthIndicator && (() => {
                           const tier = healthTier(healthFactorBps);
                           const tierLabel = HEALTH_TIER_LABEL[tier];
